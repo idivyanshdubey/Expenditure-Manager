@@ -1,3 +1,4 @@
+// DOM Elements
 const balance = document.getElementById('balance');
 const money_plus = document.getElementById('money-plus');
 const money_minus = document.getElementById('money-minus');
@@ -6,15 +7,27 @@ const form = document.getElementById('form');
 const text = document.getElementById('text');
 const amount = document.getElementById('amount');
 const categorySelect = document.getElementById('category');
-const transactionDate = document.getElementById('transaction-date');
+const dateInput = document.getElementById('transaction-date');
+const notesInput = document.getElementById('transaction-notes');
+const searchInput = document.getElementById('search-transactions');
 const filterType = document.getElementById('filter-type');
+const filterCategory = document.getElementById('filter-category');
 const sortBy = document.getElementById('sort-by');
-const expenseChart = document.getElementById('expense-chart');
+const prevPageBtn = document.getElementById('prev-page');
+const nextPageBtn = document.getElementById('next-page');
+const currentPageSpan = document.getElementById('current-page');
+const totalPagesSpan = document.getElementById('total-pages');
+const notificationContainer = document.getElementById('notification-container');
 
 // Set default date to today
-transactionDate.valueAsDate = new Date();
+dateInput.valueAsDate = new Date();
 
-// Get transactions from local storage
+// Pagination settings
+const ITEMS_PER_PAGE = 5;
+let currentPage = 1;
+let filteredTransactions = [];
+
+// Get transactions from localStorage
 const localStorageTransactions = JSON.parse(
   localStorage.getItem('transactions')
 );
@@ -27,48 +40,45 @@ function addTransaction(e) {
   e.preventDefault();
 
   if (text.value.trim() === '' || amount.value.trim() === '') {
-    showAlert('Please add a description and amount', 'error');
-  } else {
-    const transaction = {
-      id: generateID(),
-      text: text.value,
-      amount: +amount.value,
-      category: categorySelect.value,
-      date: transactionDate.value || new Date().toISOString().split('T')[0]
-    };
-
-    transactions.push(transaction);
-
-    addTransactionDOM(transaction);
-    updateValues();
-    updateLocalStorage();
-    updateChart();
-
-    // Show success message
-    showAlert('Transaction added successfully!', 'success');
-
-    // Reset form
-    text.value = '';
-    amount.value = '';
-    categorySelect.value = 'food';
-    transactionDate.valueAsDate = new Date();
+    showNotification('Please add a description and amount', 'error');
+    return;
   }
+
+  const transaction = {
+    id: generateID(),
+    text: text.value,
+    amount: +amount.value,
+    category: categorySelect.value,
+    date: dateInput.value,
+    notes: notesInput.value || ''
+  };
+
+  transactions.push(transaction);
+
+  updateLocalStorage();
+  init();
+
+  // Show success notification
+  showNotification('Transaction added successfully!', 'success');
+
+  // Reset form
+  text.value = '';
+  amount.value = '';
+  categorySelect.value = 'food';
+  dateInput.valueAsDate = new Date();
+  notesInput.value = '';
 }
 
-// Show alert message
-function showAlert(message, type) {
-  const alertDiv = document.createElement('div');
-  alertDiv.className = `alert ${type}`;
-  alertDiv.appendChild(document.createTextNode(message));
-  
-  const container = document.querySelector('.container');
-  const form = document.querySelector('#form');
-  
-  container.insertBefore(alertDiv, form);
-  
-  // Remove alert after 3 seconds
+// Show notification
+function showNotification(message, type) {
+  const notification = document.createElement('div');
+  notification.className = `notification ${type}`;
+  notification.innerText = message;
+
+  notificationContainer.appendChild(notification);
+
   setTimeout(() => {
-    alertDiv.remove();
+    notification.remove();
   }, 3000);
 }
 
@@ -85,28 +95,20 @@ function formatDate(dateString) {
 
 // Add transactions to DOM list
 function addTransactionDOM(transaction) {
-  // Get sign
   const sign = transaction.amount < 0 ? '-' : '+';
 
   const item = document.createElement('li');
-
-  // Add class based on value
   item.classList.add(transaction.amount < 0 ? 'minus' : 'plus');
-  
-  // Add animation class
-  item.classList.add('fade-in');
-
-  // Get category icon
-  const categoryIcon = getCategoryIcon(transaction.category);
 
   item.innerHTML = `
     <div class="transaction-details">
       <div class="transaction-info">
-        <span class="category-icon">${categoryIcon}</span>
+        <span class="category-icon">${getCategoryIcon(transaction.category)}</span>
         <div>
           <p class="transaction-text">${transaction.text}</p>
           <small class="transaction-date">${formatDate(transaction.date)}</small>
           <small class="transaction-category">${transaction.category}</small>
+          <small class="transaction-notes">${transaction.notes}</small>
         </div>
       </div>
       <div class="transaction-amount">
@@ -119,11 +121,6 @@ function addTransactionDOM(transaction) {
   `;
 
   list.appendChild(item);
-  
-  // Remove animation class after animation completes
-  setTimeout(() => {
-    item.classList.remove('fade-in');
-  }, 500);
 }
 
 // Get category icon
@@ -138,27 +135,24 @@ function getCategoryIcon(category) {
     salary: '<i class="fas fa-money-check-alt"></i>',
     other: '<i class="fas fa-question-circle"></i>'
   };
-  
+
   return icons[category] || icons.other;
 }
 
-// Update the balance, income and expense
+// Update the balance, income, and expense
 function updateValues() {
   const amounts = transactions.map(transaction => transaction.amount);
-  
+
   const total = amounts.reduce((acc, item) => (acc += item), 0).toFixed(2);
-  
   const income = amounts
     .filter(item => item > 0)
     .reduce((acc, item) => (acc += item), 0)
     .toFixed(2);
-    
   const expense = (
     amounts.filter(item => item < 0).reduce((acc, item) => (acc += item), 0) *
     -1
   ).toFixed(2);
 
-  // Fix: Display income correctly (was showing total)
   balance.innerText = `₹${total}`;
   money_plus.innerText = `+₹${income}`;
   money_minus.innerText = `-₹${expense}`;
@@ -167,119 +161,93 @@ function updateValues() {
 // Remove transaction by ID
 function removeTransaction(id) {
   transactions = transactions.filter(transaction => transaction.id !== id);
-  
+
   updateLocalStorage();
   init();
-  updateChart();
-  
-  // Show success message
-  showAlert('Transaction removed!', 'success');
+
+  showNotification('Transaction removed!', 'success');
 }
 
-// Update local storage transactions
+// Update localStorage
 function updateLocalStorage() {
   localStorage.setItem('transactions', JSON.stringify(transactions));
 }
 
 // Filter and sort transactions
 function filterAndSortTransactions() {
-  let filteredTransactions = [...transactions];
-  
-  // Filter by type
+  let filtered = [...transactions];
+
   if (filterType.value === 'income') {
-    filteredTransactions = filteredTransactions.filter(t => t.amount > 0);
+    filtered = filtered.filter(t => t.amount > 0);
   } else if (filterType.value === 'expense') {
-    filteredTransactions = filteredTransactions.filter(t => t.amount < 0);
+    filtered = filtered.filter(t => t.amount < 0);
   }
-  
-  // Sort transactions
-  switch(sortBy.value) {
+
+  if (filterCategory.value !== 'all') {
+    filtered = filtered.filter(t => t.category === filterCategory.value);
+  }
+
+  switch (sortBy.value) {
     case 'date-desc':
-      filteredTransactions.sort((a, b) => new Date(b.date) - new Date(a.date));
+      filtered.sort((a, b) => new Date(b.date) - new Date(a.date));
       break;
     case 'date-asc':
-      filteredTransactions.sort((a, b) => new Date(a.date) - new Date(b.date));
+      filtered.sort((a, b) => new Date(a.date) - new Date(b.date));
       break;
     case 'amount-desc':
-      filteredTransactions.sort((a, b) => b.amount - a.amount);
+      filtered.sort((a, b) => b.amount - a.amount);
       break;
     case 'amount-asc':
-      filteredTransactions.sort((a, b) => a.amount - b.amount);
+      filtered.sort((a, b) => a.amount - b.amount);
       break;
   }
-  
-  return filteredTransactions;
+
+  return filtered;
 }
 
-// Create and update chart
-function updateChart() {
-  // Group transactions by category
-  const categoryData = {};
-  const expenseTransactions = transactions.filter(t => t.amount < 0);
-  
-  expenseTransactions.forEach(transaction => {
-    const category = transaction.category;
-    if (!categoryData[category]) {
-      categoryData[category] = 0;
-    }
-    categoryData[category] += Math.abs(transaction.amount);
-  });
-  
-  const categories = Object.keys(categoryData);
-  const amounts = Object.values(categoryData);
-  
-  // Define colors for categories
-  const backgroundColors = [
-    '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', 
-    '#9966FF', '#FF9F40', '#C9CBCF', '#7CFC00'
-  ];
-  
-  // Create or update chart
-  if (window.expenseChartInstance) {
-    window.expenseChartInstance.destroy();
-  }
-  
-  if (categories.length > 0) {
-    window.expenseChartInstance = new Chart(expenseChart, {
-      type: 'doughnut',
-      data: {
-        labels: categories,
-        datasets: [{
-          data: amounts,
-          backgroundColor: backgroundColors.slice(0, categories.length),
-          borderWidth: 1
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        title: {
-          display: true,
-          text: 'Expense by Category'
-        },
-        legend: {
-          position: 'right'
-        }
-      }
-    });
-  }
+// Paginate transactions
+function paginateTransactions(transactions) {
+  const start = (currentPage - 1) * ITEMS_PER_PAGE;
+  const end = start + ITEMS_PER_PAGE;
+  return transactions.slice(start, end);
+}
+
+// Update pagination controls
+function updatePaginationControls(totalItems) {
+  const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
+  totalPagesSpan.innerText = totalPages;
+  currentPageSpan.innerText = currentPage;
+
+  prevPageBtn.disabled = currentPage === 1;
+  nextPageBtn.disabled = currentPage === totalPages;
+}
+
+// Handle pagination
+function handlePagination(direction) {
+  currentPage += direction;
+  init();
 }
 
 // Init app
 function init() {
   list.innerHTML = '';
-  
-  const filteredTransactions = filterAndSortTransactions();
-  filteredTransactions.forEach(addTransactionDOM);
-  
+
+  filteredTransactions = filterAndSortTransactions();
+  const paginatedTransactions = paginateTransactions(filteredTransactions);
+
+  paginatedTransactions.forEach(addTransactionDOM);
+
   updateValues();
-  updateChart();
+  updatePaginationControls(filteredTransactions.length);
 }
 
 // Event listeners
 form.addEventListener('submit', addTransaction);
 filterType.addEventListener('change', init);
+filterCategory.addEventListener('change', init);
 sortBy.addEventListener('change', init);
+prevPageBtn.addEventListener('click', () => handlePagination(-1));
+nextPageBtn.addEventListener('click', () => handlePagination(1));
 
 // Initialize app
 init();

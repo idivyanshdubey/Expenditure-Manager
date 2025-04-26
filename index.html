@@ -1,94 +1,352 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
-    <link rel="stylesheet" href="style.css" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" />
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <title>Divyansh's Expense Tracker</title>
-  </head>
-  <body>
-    <h2><i class="fas fa-wallet"></i> Expense Tracker</h2>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <title>Divyansh's Expense Tracker</title>
+</head>
+<body>
+  <!-- Theme toggle button -->
+  <div class="theme-toggle">
+    <button id="theme-toggle-btn" class="theme-toggle-btn" title="Toggle Theme">
+      <i class="fas fa-moon"></i>
+    </button>
+  </div>
 
-    <div class="container">
-      <div class="summary-container">
-        <div class="balance-container">
-          <h4>Your Balance</h4>
-          <h1 id="balance">₹0.00</h1>
-        </div>
-        <div class="inc-exp-container">
-          <div>
-            <h4>Income</h4>
-            <p id="money-plus" class="money plus">+₹0.00</p>
-          </div>
-          <div>
-            <h4>Expense</h4>
-            <p id="money-minus" class="money minus">-₹0.00</p>
-          </div>
-        </div>
+  <!-- Main app container -->
+  <div class="app-container">
+    <header class="app-header">
+      <div class="app-title">
+        <i class="fas fa-wallet"></i>
+        <h2>Expense Tracker</h2>
       </div>
+    </header>
 
-      <div class="chart-container">
-        <canvas id="expense-chart"></canvas>
-      </div>
+    <main class="container">
+      <!-- Dashboard section -->
+      <section class="dashboard">
+        <!-- Summary container -->
+        <div class="summary-container">
+          <div class="balance-card">
+            <h4>Your Balance</h4>
+            <h1 id="balance">₹0.00</h1>
+            <div class="balance-trend">
+              <span class="trend-icon"><i class="fas fa-arrow-up"></i></span>
+              <span class="trend-percentage">0%</span>
+              <span class="trend-period">vs last month</span>
+            </div>
+            <div class="balance-actions">
+              <button class="balance-action-btn" title="Download Report">
+                <i class="fas fa-download"></i>
+              </button>
+              <button class="balance-action-btn" title="Share">
+                <i class="fas fa-share-alt"></i>
+              </button>
+              <button class="balance-action-btn" title="Settings">
+                <i class="fas fa-cog"></i>
+              </button>
+            </div>
+          </div>
 
-      <div class="history-container">
-        <div class="history-header">
-          <h3>History</h3>
-          <div class="filter-controls">
-            <label for="filter-type">Filter by Type</label>
-            <select id="filter-type">
-              <option value="all">All</option>
-              <option value="income">Income</option>
-              <option value="expense">Expense</option>
-            </select>
-            <label for="sort-by">Sort by</label>
-            <select id="sort-by">
-              <option value="date-desc">Date (Newest)</option>
-              <option value="date-asc">Date (Oldest)</option>
-              <option value="amount-desc">Amount (High to Low)</option>
-              <option value="amount-asc">Amount (Low to High)</option>
-            </select>
+          <div class="inc-exp-container">
+            <div class="income-card">
+              <div class="card-icon">
+                <i class="fas fa-arrow-up"></i>
+              </div>
+              <div class="card-content">
+                <h4>Income</h4>
+                <p id="money-plus" class="money plus">+₹0.00</p>
+              </div>
+            </div>
+            <div class="expense-card">
+              <div class="card-icon">
+                <i class="fas fa-arrow-down"></i>
+              </div>
+              <div class="card-content">
+                <h4>Expense</h4>
+                <p id="money-minus" class="money minus">-₹0.00</p>
+              </div>
+            </div>
           </div>
         </div>
-        <ul id="list" class="list">
-          <!-- Transactions will be added here -->
-        </ul>
-      </div>
 
-      <h3>Add new transaction</h3>
-      <form id="form">
-        <div class="form-control">
-          <label for="text">Description</label>
-          <input type="text" id="text" placeholder="Enter description..." />
+        <!-- Analytics container -->
+        <div class="analytics-container">
+          <div class="analytics-header">
+            <h3><i class="fas fa-chart-pie"></i> Analytics</h3>
+            <div class="period-selector">
+              <button class="period-btn active" data-period="week">Week</button>
+              <button class="period-btn" data-period="month">Month</button>
+              <button class="period-btn" data-period="year">Year</button>
+            </div>
+          </div>
+          <div class="charts-wrapper">
+            <div class="chart-container">
+              <canvas id="expense-chart"></canvas>
+            </div>
+            <div class="chart-container">
+              <canvas id="category-chart"></canvas>
+            </div>
+          </div>
         </div>
-        <div class="form-control">
-          <label for="amount">Amount <br />
-            (negative - expense, positive - income)</label>
-          <input type="number" id="amount" placeholder="Enter amount..." />
+      </section>
+
+      <!-- Transactions section -->
+      <section class="transactions-section">
+        <!-- History container -->
+        <div class="history-container">
+          <div class="history-header">
+            <h3><i class="fas fa-history"></i> Transaction History</h3>
+            <div class="search-container">
+              <i class="fas fa-search"></i>
+              <input type="text" id="search-transactions" placeholder="Search transactions...">
+            </div>
+          </div>
+
+          <div class="filter-bar">
+            <div class="filter-group">
+              <label for="filter-type">Type:</label>
+              <select id="filter-type">
+                <option value="all">All</option>
+                <option value="income">Income</option>
+                <option value="expense">Expense</option>
+              </select>
+            </div>
+            <div class="filter-group">
+              <label for="filter-category">Category:</label>
+              <select id="filter-category">
+                <option value="all">All Categories</option>
+                <option value="food">Food</option>
+                <option value="shopping">Shopping</option>
+                <option value="entertainment">Entertainment</option>
+                <option value="bills">Bills</option>
+                <option value="transportation">Transportation</option>
+                <option value="health">Health</option>
+                <option value="salary">Salary</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+            <div class="filter-group">
+              <label for="sort-by">Sort by:</label>
+              <select id="sort-by">
+                <option value="date-desc">Date (Newest)</option>
+                <option value="date-asc">Date (Oldest)</option>
+                <option value="amount-desc">Amount (High to Low)</option>
+                <option value="amount-asc">Amount (Low to High)</option>
+              </select>
+            </div>
+          </div>
+
+          <ul id="list" class="list">
+            <!-- Transactions will be added here -->
+          </ul>
+
+          <div class="pagination">
+            <button class="pagination-btn" id="prev-page" disabled title="Previous Page">
+              <i class="fas fa-chevron-left"></i>
+            </button>
+            <span class="page-info">Page <span id="current-page">1</span> of <span id="total-pages">1</span></span>
+            <button class="pagination-btn" id="next-page" disabled title="Next Page">
+              <i class="fas fa-chevron-right"></i>
+            </button>
+          </div>
         </div>
-        <div class="form-control">
-          <label for="category">Category</label>
-          <select id="category">
-            <option value="food">Food</option>
-            <option value="shopping">Shopping</option>
-            <option value="entertainment">Entertainment</option>
-            <option value="bills">Bills</option>
-            <option value="transportation">Transportation</option>
-            <option value="health">Health</option>
-            <option value="salary">Salary</option>
-            <option value="other">Other</option>
-          </select>
+
+        <!-- Add transaction form -->
+        <div class="add-transaction-container">
+          <h3><i class="fas fa-plus-circle"></i> Add Transaction</h3>
+          <form id="form">
+            <div class="form-control">
+              <label for="text">Description</label>
+              <input type="text" id="text" placeholder="Enter description..." required />
+            </div>
+            
+            <div class="form-control">
+              <label for="amount">Amount</label>
+              <div class="amount-input-wrapper">
+                <span class="currency-symbol">₹</span>
+                <input type="number" id="amount" placeholder="Enter amount..." required />
+              </div>
+              <small>Use negative values for expenses, positive for income</small>
+            </div>
+            
+            <div class="form-row">
+              <div class="form-control">
+                <label for="category">Category</label>
+                <div class="select-wrapper">
+                  <select id="category" required>
+                    <option value="" disabled selected>Select category</option>
+                    <option value="food">Food & Dining</option>
+                    <option value="shopping">Shopping</option>
+                    <option value="entertainment">Entertainment</option>
+                    <option value="bills">Bills & Utilities</option>
+                    <option value="transportation">Transportation</option>
+                    <option value="health">Health & Medical</option>
+                    <option value="education">Education</option>
+                    <option value="salary">Salary</option>
+                    <option value="investment">Investment</option>
+                    <option value="other">Other</option>
+                  </select>
+                  <i class="fas fa-chevron-down"></i>
+                </div>
+              </div>
+              
+              <div class="form-control">
+                <label for="transaction-date">Date</label>
+                <input type="date" id="transaction-date" required />
+              </div>
+            </div>
+            
+            <div class="form-control">
+              <label for="transaction-notes">Notes (Optional)</label>
+              <textarea id="transaction-notes" placeholder="Add any additional notes..."></textarea>
+            </div>
+            
+            <div class="form-actions">
+              <button type="reset" class="btn btn-secondary">
+                <i class="fas fa-undo"></i> Reset
+              </button>
+              <button type="submit" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Add Transaction
+              </button>
+            </div>
+          </form>
         </div>
-        <div class="form-control">
-          <label for="transaction-date">Date</label>
-          <input type="date" id="transaction-date" />
-        </div>
-        <button class="btn"><i class="fas fa-plus"></i> Add transaction</button>
-      </form>
-    </div>
-    <script src="script.js"></script>
-  </body>
+      </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+      <p>&copy; 2023 Divyansh's Expense Tracker. All rights reserved.</p>
+    </footer>
+  </div>
+
+  <!-- Notification container -->
+  <div class="notification-container" id="notification-container"></div>
+
+  <!-- Scripts -->
+  <script src="script.js"></script>
+  <script>
+    // Theme toggle functionality
+    document.getElementById('theme-toggle-btn').addEventListener('click', function() {
+      document.body.classList.toggle('dark-theme');
+      const icon = this.querySelector('i');
+      if (document.body.classList.contains('dark-theme')) {
+        icon.classList.remove('fa-moon');
+        icon.classList.add('fa-sun');
+        localStorage.setItem('theme', 'dark');
+      } else {
+        icon.classList.remove('fa-sun');
+        icon.classList.add('fa-moon');
+        localStorage.setItem('theme', 'light');
+      }
+    });
+
+    // Check for saved theme preference
+    if (localStorage.getItem('theme') === 'dark') {
+      document.body.classList.add('dark-theme');
+      document.querySelector('.theme-toggle-btn i').classList.remove('fa-moon');
+      document.querySelector('.theme-toggle-btn i').classList.add('fa-sun');
+    }
+
+    // Period selector for analytics
+    document.querySelectorAll('.period-btn').forEach(btn => {
+      btn.addEventListener('click', function() {
+        document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+        updateCharts(this.dataset.period);
+      });
+    });
+
+    // Function to update charts based on period
+    function updateCharts(period) {
+      // This would be implemented in your script.js file
+      console.log(`Updating charts for period: ${period}`);
+    }
+
+    // Initialize charts
+    function initCharts() {
+      // Expense Chart
+      const expenseCtx = document.getElementById('expense-chart').getContext('2d');
+      const expenseChart = new Chart(expenseCtx, {
+        type: 'line',
+        data: {
+          labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+          datasets: [
+            {
+              label: 'Income',
+              data: [0, 0, 0, 0, 0, 0, 0],
+              borderColor: '#00b894',
+              backgroundColor: 'rgba(0, 184, 148, 0.1)',
+              tension: 0.4,
+              fill: true
+            },
+            {
+              label: 'Expenses',
+              data: [0, 0, 0, 0, 0, 0, 0],
+              borderColor: '#e74c3c',
+              backgroundColor: 'rgba(231, 76, 60, 0.1)',
+              tension: 0.4,
+              fill: true
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'top',
+            },
+            title: {
+              display: true,
+              text: 'Income vs Expenses'
+            }
+          }
+        }
+      });
+
+      // Category Chart
+      const categoryCtx = document.getElementById('category-chart').getContext('2d');
+      const categoryChart = new Chart(categoryCtx, {
+        type: 'doughnut',
+        data: {
+          labels: ['Food', 'Shopping', 'Entertainment', 'Bills', 'Transportation', 'Health', 'Other'],
+          datasets: [{
+            data: [0, 0, 0, 0, 0, 0, 0],
+            backgroundColor: [
+              '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40', '#C9CBCF'
+            ]
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'right',
+            },
+            title: {
+              display: true,
+              text: 'Expense by Category'
+            }
+          }
+        }
+      });
+
+      // Store charts in window object to access them later
+      window.appCharts = {
+        expenseChart,
+        categoryChart
+      };
+    }
+
+    // Initialize charts when page loads
+    document.addEventListener('DOMContentLoaded', initCharts);
+  </script>
+</body>
 </html>
