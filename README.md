@@ -17,7 +17,6 @@ A simple and interactive expense tracking app built with **JavaScript**, **HTML*
 ## 🏠 Homepage Screenshot
 
 ![Homepage Screenshot](home.png)
-> _Add a screenshot of your homepage as `homepage.png` in the root directory to display it here._
 
 ---
 
